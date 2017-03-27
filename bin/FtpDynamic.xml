@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
+	xmlns:int-ftp="http://www.springframework.org/schema/integration/ftp"
+	xmlns:int-file="http://www.springframework.org/schema/integration/file"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/integration/ftp  http://www.springframework.org/schema/integration/ftp/spring-integration-ftp.xsd">
+
+	<context:property-placeholder />
+
+	<bean id="ftpFactory_@Id" class="org.springframework.integration.ftp.session.DefaultFtpSessionFactory">
+		<property name="host" value="${host}"/>
+		<property name="username" value="${userName}"/>
+		<property name="password" value="${password}"/>
+		<property name="clientMode" value="${clientMode}"/>
+	</bean>
+	
+	<int-ftp:inbound-channel-adapter id="ftpInbound_@Id" 
+	    channel="ftpFromChannel_@Id"
+	    session-factory="ftpFactory_@Id"
+	    local-filter="acceptAllFileListFilter"
+	    auto-create-local-directory="true"
+	    filename-pattern="${pattern}"
+	    remote-directory="/"
+	    local-directory="/home/dsuarez/ftpserver"
+	    auto-startup="true">
+	    <int:poller fixed-rate="5000"/>
+	</int-ftp:inbound-channel-adapter>
+	
+ 	<int:header-enricher input-channel="ftpFromChannel_@Id" output-channel="ftpToChannel">
+        <int:header name="ftpId" value="${id}" />
+    </int:header-enricher>	
+
+	<int:channel id="ftpOutboundGatewayChannel_@Id"></int:channel>
+	
+	<int:filter 
+		input-channel="ftpOutboundChannel" output-channel="ftpOutboundGatewayChannel_@Id" expression="headers.ftpId.equals('${id}') and headers.http_statusCode == T(org.springframework.http.HttpStatus).OK">
+	</int:filter>
+	
+	<int-file:outbound-gateway
+		request-channel="ftpOutboundGatewayChannel_@Id"
+		directory="/home/dsuarez/ftpserver"
+		delete-source-files="true">
+	</int-file:outbound-gateway>
+	
+	<int-ftp:outbound-gateway id="ftpOutboundGateway"
+	 	request-channel="ftpOutboundGatewayChannel_@Id"
+	 	reply-channel="endChannel"
+		session-factory="ftpFactory_@Id"
+		command="rm"
+		remote-directory="/"
+		expression="headers.file_name">  
+	</int-ftp:outbound-gateway> 
+
+</beans>

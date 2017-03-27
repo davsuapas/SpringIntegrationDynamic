@@ -1,0 +1,45 @@
+buildscript {
+	ext {
+		springBootVersion = '1.4.2.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+
+jar {
+	baseName = 'spring-integration-demo'
+	version = '0.0.1-SNAPSHOT'
+}
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+	
+    maven {
+        url "https://artifacts.alfresco.com/nexus/content/repositories/public/"
+    }		
+}
+
+dependencies {
+
+	compile('org.springframework.boot:spring-boot-starter-web')
+	compile('org.springframework.boot:spring-boot-starter-integration')
+	compile('org.springframework.integration:spring-integration-jdbc')
+	compile('org.springframework.integration:spring-integration-ftp')
+	compile('org.springframework.integration:spring-integration-http')
+	
+	compile group: 'com.microsoft.sqlserver', name: 'sqljdbc4', version: '4.0'
+	compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.8.6'
+	
+	
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+}
